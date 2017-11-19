@@ -192,9 +192,9 @@ class Chillambda(val verifier: Cuarentena = Cuarentena()) {
                 digest.update(receiverClassName)
                 digest.update(returnTypeClassName)
                 actualClassesToShipAsBytes.forEach {
-                        digest.update(it.className)
-                        digest.update(it.bytes)
-                    }
+                    digest.update(it.className)
+                    digest.update(it.bytes)
+                }
                 digest.update(serializedBytes)
 
                 val calcSig = digest.finish().getHex(true, SipHashCase.UPPER)
