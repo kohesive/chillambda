@@ -13,15 +13,15 @@ import kotlin.reflect.KClass
 
 class Chillambda(val verifier: Cuarentena = Cuarentena()) {
     companion object {
-        val BINARY_PREFIX = "chilambda~~"
-        val MARKER_SIG = "x9a0K1"
-        val MARKER_VER = 1
-        val SIG_SEED = "ChillWitMeLambda"
+        private val BINARY_PREFIX = "chilambda~~"
+        private val MARKER_SIG = "x9a0K1"
+        private val MARKER_VER = 1
+        private val SIG_SEED = "ChillWitMeLambda"
 
         fun isPrefixedBase64(scriptSource: String): Boolean = scriptSource.startsWith(BINARY_PREFIX)
     }
 
-    fun SipHashDigest.update(s: String): SipHashDigest = this.update(s.toByteArray())
+    private fun SipHashDigest.update(s: String): SipHashDigest = this.update(s.toByteArray())
 
     data class SerializedLambdaClassData(val className: String, val classes: List<NamedClassBytes>, val serializedLambda: ByteArray, val verification: Cuarentena.VerifyResults)
 
@@ -56,7 +56,7 @@ class Chillambda(val verifier: Cuarentena = Cuarentena()) {
                     }
                 }
 
-                val serializedInstance = stream.readByteArray()
+                val serializedInstanceBytes = stream.readByteArray()
 
                 val sentSig = stream.readString()
 
@@ -68,7 +68,7 @@ class Chillambda(val verifier: Cuarentena = Cuarentena()) {
                     digest.update(it.className)
                     digest.update(it.bytes)
                 }
-                digest.update(serializedInstance)
+                digest.update(serializedInstanceBytes)
                 val calcSig = digest.finish().getHex(true, SipHashCase.UPPER)
 
                 if (sentSig != calcSig) throw ClassSerDesException("Serialized classes signature is not valid")
@@ -80,7 +80,7 @@ class Chillambda(val verifier: Cuarentena = Cuarentena()) {
                     throw ClassSerDerViolationsException("The Lambda classes have invalid references:  \n${verification.violationsAsString()}", verification.violations)
                 }
 
-                SerializedLambdaClassData(className, verification.filteredClasses, serializedInstance, verification)
+                SerializedLambdaClassData(className, verification.filteredClasses, serializedInstanceBytes, verification)
             }
             return content
         } catch (ex: Throwable) {
@@ -206,20 +206,27 @@ class Chillambda(val verifier: Cuarentena = Cuarentena()) {
         return BINARY_PREFIX + encodedBinary
     }
 
-    inline fun <reified R : Any, reified T : Any> instantiateSerializedLambdaSafely(className: String, serBytes: ByteArray, additionalPolicies: Set<String> = emptySet()): R.() -> T? {
-        return instantiateSerializedLambdaSafely(R::class, T::class, className, serBytes, additionalPolicies)
+    inline fun <reified R : Any, reified T : Any> instantiateSerializedLambdaSafely(className: String, serBytes: ByteArray, classLoader: ClassLoader, additionalPolicies: Set<String> = emptySet()): R.() -> T? {
+        return instantiateSerializedLambdaSafely(R::class, T::class, className, serBytes, classLoader, additionalPolicies)
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <R : Any, T : Any> instantiateSerializedLambdaSafely(lambdaReceiver: KClass<R>, lambdaReturnType: KClass<T>, className: String, serBytes: ByteArray, additionalPolicies: Set<String> = emptySet()): R.() -> T? {
-        val tracer = RestrictUsedClassesObjectInputStream(verifier, additionalPolicies, ByteArrayInputStream(serBytes))
+    fun <R : Any, T : Any> instantiateSerializedLambdaSafely(lambdaReceiver: KClass<R>, lambdaReturnType: KClass<T>, className: String, serBytes: ByteArray, classLoader: ClassLoader, additionalPolicies: Set<String> = emptySet()): R.() -> T? {
+
+        val tracer = RestrictUsedClassesObjectInputStream(verifier, additionalPolicies, classLoader, ByteArrayInputStream(serBytes))
         return tracer.use { stream ->
             stream.readObject()
         } as R.() -> T
     }
 
-    private class RestrictUsedClassesObjectInputStream(val verifier: Cuarentena, val additionalPolicies: Set<String>, input: InputStream) : ObjectInputStream(input) {
-        override fun resolveClass(desc: ObjectStreamClass?): Class<*> {
+    private class RestrictUsedClassesObjectInputStream(val verifier: Cuarentena, val additionalPolicies: Set<String>,  val classLoader: ClassLoader, input: InputStream) : ObjectInputStream(input) {
+        override fun resolveClass(desc: ObjectStreamClass): Class<*> {
+            val name = desc.getName()
+            try {
+                return classLoader.loadClass(name)
+            } catch (ex: ClassNotFoundException) {
+                // ignore, maybe is outside of our classloader?
+            }
             return super.resolveClass(desc)
         }
 

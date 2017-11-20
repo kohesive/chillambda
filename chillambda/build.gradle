@@ -1,5 +1,7 @@
 dependencies {
     compile group: 'uy.kohesive.cuarentena', name: 'cuarentena', version: version_cuarentena
+    compile group: 'uy.kohesive.cuarentena', name: 'cuarentena-policy', version: version_cuarentena
+    compile group: 'uy.kohesive.cuarentena', name: 'cuarentena-painless-policy', version: version_cuarentena
 
     testCompile group: 'junit', name: 'junit', version: version_junit
     testCompile group: 'org.jetbrains.kotlin', name: 'kotlin-test-junit', version: version_kotlin
