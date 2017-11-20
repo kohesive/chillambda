@@ -8,7 +8,7 @@ import uy.kohesive.cuarentena.policy.PolicyAllowance
 import uy.kohesive.cuarentena.policy.toPolicy
 import java.io.Serializable
 
-class TestSerializationLambdas : Serializable {
+class LambdaSerializationTests : Serializable {
     @Test
     fun testActualThing() {
         internal()
