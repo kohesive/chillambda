@@ -1,0 +1,21 @@
+ext {
+    projectUrl ="https://github.com/kohesive/chillambda"
+    projectName = "Chillambda"
+    projectDescription = 'Safe and secure serialization and shipping of Kotlin lambdas for remote execution.'
+    projectInception = '2017'
+
+    sonatypePackageGroup = "uy.kohesive"
+    scmUrl = "git://github.com:kohesive/chillambda.git"
+    scmGitFile = "scm:git@github.com:kohesive/chillambda.git"
+
+    pomProjectName = projectName
+    groupName = project.group
+
+    licenseName = "MIT"
+    licenseUrl = "$projectUrl/blob/master/LICENSE"
+
+    organisation = groupName
+    primaryEmail = "oss@kohesive.io"
+
+    binTrayRepo = "kohesive"
+}
