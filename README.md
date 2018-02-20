@@ -17,5 +17,5 @@ Chillambda use cases:
 Add add the following dependency:
 
 ```
-uy.kohesive.chillambda:chillambda:1.0.0-BETA-06
+uy.kohesive.chillambda:chillambda:1.0.0-BETA-07
 ```
